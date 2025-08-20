@@ -1,0 +1,38 @@
+service: puppeteer-service
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-southeast-2
+  memorySize: 1024
+  timeout: 30
+  environment:
+    IS_LOCAL: ${env:IS_LOCAL, 'false'}
+
+functions:
+  screenshot:
+    handler: handler.screenshot
+    events:
+      - httpApi:
+          path: /screenshot
+          method: get
+    memorySize: 1536
+    timeout: 60
+    layers:
+      # layer to get the binary not included in raw linux and node > 16
+      # https://github.com/shelfio/chrome-aws-lambda-layer
+      # - arn:aws:lambda:ap-southeast-2:764866452798:layer:chrome-aws-lambda:50 
+
+package:
+  individually: true
+
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+    # tell esbuild to not bundle and strips the binaries (non-js)
+    # else it will break
+    external:
+      - '@sparticuz/chromium'
+      - 'puppeteer-core'
+
